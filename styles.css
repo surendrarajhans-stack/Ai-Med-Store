@@ -1872,3 +1872,32 @@ body {
     color: #fff;
     box-shadow: 0 0 10px var(--primary-glow);
 }
+
+/* Merchant Inventory Table */
+.inventory-table th, .inventory-table td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.inventory-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.btn-delete-med {
+    background: rgba(225, 29, 72, 0.08);
+    border: 1px solid rgba(225, 29, 72, 0.3);
+    color: #f43f5e;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.btn-delete-med:hover {
+    background: #e11d48;
+    border-color: #e11d48;
+    color: #fff;
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.4);
+}

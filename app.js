@@ -3,7 +3,7 @@
    ========================================================================== */
 
 // 1. Medicine Database
-const MEDICINES = [
+let MEDICINES = [
     {
         id: "med-1",
         name: "Aspirin Cardioprotect",
@@ -356,7 +356,17 @@ const dom = {
     profileAsthma: document.getElementById('profile-asthma'),
     profilePregnancy: document.getElementById('profile-pregnancy'),
     profileKidney: document.getElementById('profile-kidney'),
-    profileNsaidAllergy: document.getElementById('profile-nsaid-allergy')
+    profileNsaidAllergy: document.getElementById('profile-nsaid-allergy'),
+
+    // Merchant inventory elements
+    formAddMedicine: document.getElementById('form-add-medicine'),
+    addMedName: document.getElementById('add-med-name'),
+    addMedIngredient: document.getElementById('add-med-ingredient'),
+    addMedPrice: document.getElementById('add-med-price'),
+    addMedCategory: document.getElementById('add-med-category'),
+    addMedDesc: document.getElementById('add-med-desc'),
+    addMedRequiresRx: document.getElementById('add-med-requires-rx'),
+    merchantInventoryList: document.getElementById('merchant-inventory-list')
 };
 
 // Simulated data for prescription scanner results
@@ -1256,11 +1266,85 @@ function handleTelehealthChoice(opt) {
 }
 
 // ==========================================================================
+// Merchant Inventory Manager Logic
+// ==========================================================================
+function renderMerchantInventory() {
+    const list = dom.merchantInventoryList;
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    MEDICINES.forEach(med => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = "1px solid rgba(255, 255, 255, 0.05)";
+        tr.innerHTML = `
+            <td style="padding: 0.75rem 0.5rem; font-weight: 600;">${med.name}</td>
+            <td style="padding: 0.75rem 0.5rem; text-transform: capitalize;">${med.category}</td>
+            <td style="padding: 0.75rem 0.5rem;">$${med.price.toFixed(2)}</td>
+            <td style="padding: 0.75rem 0.5rem;">${med.requiresRx ? "🔴 Yes" : "🟢 No"}</td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right;">
+                <button class="btn-delete-med" onclick="deleteMedication('${med.id}')">Remove</button>
+            </td>
+        `;
+        list.appendChild(tr);
+    });
+}
+
+window.deleteMedication = function(id) {
+    // Delete item from array
+    MEDICINES = MEDICINES.filter(m => m.id !== id);
+    
+    // Also remove from active shopping cart if present
+    cart = cart.filter(c => c.product.id !== id);
+    
+    // Refresh displays
+    renderCatalog();
+    renderCart();
+    checkInteractions();
+    renderMerchantInventory();
+    
+    addChatMessage(`System Alert: Medication removed from database catalog.`, false);
+};
+
+if (dom.formAddMedicine) {
+    dom.formAddMedicine.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const newMed = {
+            id: `med-${MEDICINES.length + 1}_${Math.floor(Math.random() * 1000)}`,
+            name: dom.addMedName.value.trim(),
+            ingredient: dom.addMedIngredient.value.trim(),
+            price: parseFloat(dom.addMedPrice.value),
+            category: dom.addMedCategory.value,
+            requiresRx: dom.addMedRequiresRx.checked,
+            description: dom.addMedDesc.value.trim()
+        };
+        
+        // Push to array
+        MEDICINES.push(newMed);
+        
+        // Reset form inputs
+        dom.formAddMedicine.reset();
+        
+        // Refresh displays
+        renderCatalog();
+        renderMerchantInventory();
+        
+        // Prompt system alert
+        addChatMessage(`System Alert: **${newMed.name}** has been successfully added to the active inventory catalog under Category: **${newMed.category}**.`, false);
+        
+        // Alert notification
+        alert(`Success: "${newMed.name}" added to global catalog registry.`);
+    });
+}
+
+// ==========================================================================
 // App Initialization
 // ==========================================================================
 renderCatalog();
 renderCart();
 updateAIPharmacistGreeting(false);
+renderMerchantInventory();
 
 // Initialize subdomain display values
 dom.headerSubdomain.innerText = `${selectedSubdomain}${customDomainSuffix}`;

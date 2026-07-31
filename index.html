@@ -400,6 +400,68 @@
                             </div>
                         </div>
                     </div>
+
+                    <h2 class="settings-title" style="margin-top: 3rem;">Merchant Catalog & Inventory</h2>
+                    <p class="settings-desc">Add new medicines, adjust catalog pricing, and remove discontinued stock items from the global storefront.</p>
+                    
+                    <div class="settings-card glass-panel animate-scale" style="margin-top: 1rem;">
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--primary);">Add New Medication</h3>
+                        <form id="form-add-medicine" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Medication Name</label>
+                                <input type="text" id="add-med-name" required class="settings-input" placeholder="e.g. Penicillin G" style="border: 1px solid var(--border-color); border-radius: var(--border-radius-md);">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Active Ingredient</label>
+                                <input type="text" id="add-med-ingredient" required class="settings-input" placeholder="e.g. Penicillin" style="border: 1px solid var(--border-color); border-radius: var(--border-radius-md);">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Base Price (USD)</label>
+                                <input type="number" step="0.01" id="add-med-price" required class="settings-input" placeholder="e.g. 19.99" style="border: 1px solid var(--border-color); border-radius: var(--border-radius-md);">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Category</label>
+                                <select id="add-med-category" class="settings-select">
+                                    <option value="prescription">Prescription</option>
+                                    <option value="painrelief">Pain Relief</option>
+                                    <option value="firstaid">First Aid</option>
+                                    <option value="supplements">Supplements</option>
+                                </select>
+                            </div>
+                            <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 0.35rem;">
+                                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Description</label>
+                                <input type="text" id="add-med-desc" required class="settings-input" placeholder="e.g. High-efficiency antibiotic for bacterial infections." style="border: 1px solid var(--border-color); border-radius: var(--border-radius-md);">
+                            </div>
+                            <div style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+                                <label class="health-checkbox-label">
+                                    <input type="checkbox" id="add-med-requires-rx">
+                                    <span class="checkbox-custom"></span>
+                                    Requires Prescription (Rx Check)
+                                </label>
+                                <button type="submit" class="btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.85rem; border-radius: var(--border-radius-md);">Add to Catalog</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="settings-card glass-panel animate-scale" style="margin-top: 2rem; padding: 1.5rem;">
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--primary);">Active Catalog Registry</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="inventory-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
+                                        <th style="padding: 0.75rem 0.5rem;">Name</th>
+                                        <th style="padding: 0.75rem 0.5rem;">Category</th>
+                                        <th style="padding: 0.75rem 0.5rem;">Price (USD)</th>
+                                        <th style="padding: 0.75rem 0.5rem;">Rx Req.</th>
+                                        <th style="padding: 0.75rem 0.5rem; text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="merchant-inventory-list">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>

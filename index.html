@@ -23,6 +23,7 @@
                     <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <span class="logo-text">Aegis<span>Med</span></span>
+                <span class="header-subdomain" id="header-subdomain">medstore.technocons.com</span>
             </div>
             
             <!-- Main Navigation Tabs -->
@@ -261,6 +262,25 @@
                         <div class="settings-group">
                             <div class="settings-row">
                                 <div class="settings-info">
+                                    <label for="input-subdomain">
+                                        <span class="settings-icon">🔗</span>
+                                        Store Subdomain
+                                    </label>
+                                    <span class="settings-subtext">Set your custom merchant subdomain for this pharmaceutical store.</span>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="subdomain-input-wrapper">
+                                        <input type="text" id="input-subdomain" class="settings-input" value="medstore" placeholder="enter-subdomain">
+                                        <span class="subdomain-domain">.technocons.com</span>
+                                    </div>
+                                    <div class="settings-preview-url">
+                                        Live: <a id="subdomain-preview-link" href="https://medstore.technocons.com" target="_blank">https://medstore.technocons.com</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-row">
+                                <div class="settings-info">
                                     <label for="select-region">
                                         <span class="settings-icon">🌐</span>
                                         Region / Market
@@ -375,6 +395,10 @@
                     <div class="summary-row">
                         <span>Delivery Time:</span>
                         <strong id="delivery-time">Same Day (Within 2 hrs)</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Digital Receipt:</span>
+                        <a id="receipt-url" href="#" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.85rem; word-break: break-all;">Link</a>
                     </div>
                 </div>
                 

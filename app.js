@@ -173,6 +173,9 @@ let selectedCurrency = "USD";
 let selectedTimezone = "UTC";
 let activeScannerKey = null; // Caches which sample was scanned
 
+let selectedSubdomain = "medstore";
+const customDomainSuffix = ".technocons.com";
+
 // Helper function: formats a price based on selected currency
 function formatPrice(usdValue) {
     const info = CURRENCIES[selectedCurrency];
@@ -231,7 +234,13 @@ const dom = {
     // Settings
     selectRegion: document.getElementById('select-region'),
     selectCurrency: document.getElementById('select-currency'),
-    selectTimezone: document.getElementById('select-timezone')
+    selectTimezone: document.getElementById('select-timezone'),
+
+    // Subdomain elements
+    inputSubdomain: document.getElementById('input-subdomain'),
+    subdomainPreviewLink: document.getElementById('subdomain-preview-link'),
+    headerSubdomain: document.getElementById('header-subdomain'),
+    receiptUrl: document.getElementById('receipt-url')
 };
 
 // Simulated data for prescription scanner results
@@ -589,6 +598,10 @@ function getPharmacistResponse(input) {
         return "For cognitive health and memory boost, we suggest **Omega-3 Pure Health** (containing essential fatty acids EPA and DHA). **Vitamin C Spark** is also excellent for overall neurological support against oxidative stress.";
     }
     
+    if (text.includes("subdomain") || text.includes("store url") || text.includes("domain") || text.includes("link") || text.includes("website")) {
+        return `Your AegisMed storefront is configured on custom domain: **https://${selectedSubdomain}${customDomainSuffix}**. You can share this URL with patients to host catalogs or submit digital prescriptions.`;
+    }
+
     // Generic responses
     return "Thank you for asking. To assist you accurately, please mention specific drug names (e.g., *Aspirin*, *Ibuprofen*, *Amoxicillin*, *Warfarin*) or specify what symptoms you are hoping to manage. Always remember to seek professional clinical advice for critical concerns.";
 }
@@ -770,6 +783,11 @@ dom.btnCheckout.addEventListener('click', () => {
     // Set localized delivery time
     dom.deliveryTime.innerText = getCheckoutDeliveryEstimate();
     
+    // Update digital receipt URL
+    const receiptLink = `https://${selectedSubdomain}${customDomainSuffix}/orders/${rand}`;
+    dom.receiptUrl.innerText = receiptLink;
+    dom.receiptUrl.href = receiptLink;
+    
     // Display Modal
     dom.modalCheckoutSuccess.classList.add('open');
     closeCartDrawer();
@@ -878,8 +896,30 @@ dom.btnCloseSuccess.addEventListener('click', () => {
 });
 
 // ==========================================================================
+// Subdomain Interaction Event Listener
+// ==========================================================================
+dom.inputSubdomain.addEventListener('input', (e) => {
+    // Sanitize input: lowercase, alphanumeric and hyphens only
+    let val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    
+    selectedSubdomain = val;
+    e.target.value = selectedSubdomain;
+    
+    // Update UI elements
+    const fullUrl = `https://${selectedSubdomain || 'medstore'}${customDomainSuffix}`;
+    dom.headerSubdomain.innerText = `${selectedSubdomain || 'medstore'}${customDomainSuffix}`;
+    dom.subdomainPreviewLink.innerText = fullUrl;
+    dom.subdomainPreviewLink.href = fullUrl;
+});
+
+// ==========================================================================
 // App Initialization
 // ==========================================================================
 renderCatalog();
 renderCart();
 updateAIPharmacistGreeting(false);
+
+// Initialize subdomain display values
+dom.headerSubdomain.innerText = `${selectedSubdomain}${customDomainSuffix}`;
+dom.subdomainPreviewLink.innerText = `https://${selectedSubdomain}${customDomainSuffix}`;
+dom.subdomainPreviewLink.href = `https://${selectedSubdomain}${customDomainSuffix}`;

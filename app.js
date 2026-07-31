@@ -146,11 +146,11 @@ const CURRENCIES = {
 };
 
 const REGIONS = {
-    US: { name: "United States", greeting: "Hello! Welcome to AegisMed US.", policy: "Standard FDA safety rules apply." },
-    UK: { name: "United Kingdom", greeting: "Hello! Welcome to AegisMed UK.", policy: "NHS compliance rules apply." },
-    IN: { name: "India", greeting: "Namaste! Welcome to AegisMed India.", policy: "CDSCO drug controls apply." },
-    DE: { name: "Germany", greeting: "Guten Tag! Willkommen bei AegisMed Deutschland.", policy: "BfArM safety regulations apply." },
-    JP: { name: "Japan", greeting: "Konnichiwa! Welcome to AegisMed Japan.", policy: "PMDA pharmaceutical guidelines apply." }
+    US: { name: "United States", greeting: "Hello! Welcome to AegisMed US.", policy: "Standard FDA safety rules apply.", defaultCurrency: "USD", defaultTimezone: "EST" },
+    UK: { name: "United Kingdom", greeting: "Hello! Welcome to AegisMed UK.", policy: "NHS compliance rules apply.", defaultCurrency: "GBP", defaultTimezone: "GMT" },
+    IN: { name: "India", greeting: "Namaste! Welcome to AegisMed India.", policy: "CDSCO drug controls apply.", defaultCurrency: "INR", defaultTimezone: "IST" },
+    DE: { name: "Germany", greeting: "Guten Tag! Willkommen bei AegisMed Deutschland.", policy: "BfArM safety regulations apply.", defaultCurrency: "EUR", defaultTimezone: "CET" },
+    JP: { name: "Japan", greeting: "Konnichiwa! Welcome to AegisMed Japan.", policy: "PMDA pharmaceutical guidelines apply.", defaultCurrency: "JPY", defaultTimezone: "JST" }
 };
 
 const TIMEZONES = {
@@ -780,6 +780,25 @@ dom.btnCheckout.addEventListener('click', () => {
 // ==========================================================================
 dom.selectRegion.addEventListener('change', (e) => {
     selectedRegion = e.target.value;
+    
+    // Auto-synchronize Currency and Time Zone based on selected region
+    const regInfo = REGIONS[selectedRegion];
+    if (regInfo.defaultCurrency) {
+        selectedCurrency = regInfo.defaultCurrency;
+        dom.selectCurrency.value = selectedCurrency;
+    }
+    if (regInfo.defaultTimezone) {
+        selectedTimezone = regInfo.defaultTimezone;
+        dom.selectTimezone.value = selectedTimezone;
+    }
+    
+    // Trigger updates across product shelf and cart
+    renderCatalog();
+    renderCart();
+    if (activeScannerOutput) {
+        displayScannerResults(activeScannerKey);
+    }
+    
     updateAIPharmacistGreeting(true);
 });
 

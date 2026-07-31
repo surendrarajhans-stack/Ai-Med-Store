@@ -136,11 +136,49 @@ const INCOMPATIBILITY_RULES = [
     }
 ];
 
+// 2a. Localization Definitions
+const CURRENCIES = {
+    USD: { symbol: "$", rate: 1.0 },
+    GBP: { symbol: "£", rate: 0.77 },
+    INR: { symbol: "₹", rate: 83.5 },
+    EUR: { symbol: "€", rate: 0.92 },
+    JPY: { symbol: "¥", rate: 155.0 }
+};
+
+const REGIONS = {
+    US: { name: "United States", greeting: "Hello! Welcome to AegisMed US.", policy: "Standard FDA safety rules apply." },
+    UK: { name: "United Kingdom", greeting: "Hello! Welcome to AegisMed UK.", policy: "NHS compliance rules apply." },
+    IN: { name: "India", greeting: "Namaste! Welcome to AegisMed India.", policy: "CDSCO drug controls apply." },
+    DE: { name: "Germany", greeting: "Guten Tag! Willkommen bei AegisMed Deutschland.", policy: "BfArM safety regulations apply." },
+    JP: { name: "Japan", greeting: "Konnichiwa! Welcome to AegisMed Japan.", policy: "PMDA pharmaceutical guidelines apply." }
+};
+
+const TIMEZONES = {
+    UTC: { label: "UTC", offset: 0 },
+    EST: { label: "EST", offset: -5 },
+    GMT: { label: "GMT", offset: 0 },
+    IST: { label: "IST", offset: 5.5 },
+    CET: { label: "CET", offset: 1 },
+    JST: { label: "JST", offset: 9 }
+};
+
 // 3. Application State
 let cart = [];
 let currentCategoryFilter = "all";
 let searchFilterQuery = "";
 let otcOnlyFilter = false;
+
+let selectedRegion = "US";
+let selectedCurrency = "USD";
+let selectedTimezone = "UTC";
+let activeScannerKey = null; // Caches which sample was scanned
+
+// Helper function: formats a price based on selected currency
+function formatPrice(usdValue) {
+    const info = CURRENCIES[selectedCurrency];
+    const converted = usdValue * info.rate;
+    return `${info.symbol}${converted.toFixed(2)}`;
+}
 
 // 4. Dom Nodes Caching
 const dom = {
@@ -187,7 +225,13 @@ const dom = {
     // Checkout Modal
     modalCheckoutSuccess: document.getElementById('modal-checkout-success'),
     btnCloseSuccess: document.getElementById('btn-close-success'),
-    refNumber: document.getElementById('ref-number')
+    refNumber: document.getElementById('ref-number'),
+    deliveryTime: document.getElementById('delivery-time'),
+
+    // Settings
+    selectRegion: document.getElementById('select-region'),
+    selectCurrency: document.getElementById('select-currency'),
+    selectTimezone: document.getElementById('select-timezone')
 };
 
 // Simulated data for prescription scanner results
@@ -282,7 +326,7 @@ function renderCatalog() {
             </div>
             <p class="product-description">${med.description}</p>
             <div class="product-footer">
-                <span class="product-price">$${med.price.toFixed(2)}</span>
+                <span class="product-price">${formatPrice(med.price)}</span>
                 <button class="btn-add-cart" onclick="addToCart('${med.id}')">Add to Cart</button>
             </div>
         `;
@@ -357,7 +401,7 @@ function renderCart() {
                 <p>Your cart is empty</p>
             </div>
         `;
-        dom.cartSubtotal.innerText = "$0.00";
+        dom.cartSubtotal.innerText = formatPrice(0);
         dom.cartBadge.innerText = "0";
         dom.rxWarning.style.display = "none";
         dom.btnCheckout.disabled = true;
@@ -377,7 +421,7 @@ function renderCart() {
             <div class="cart-item-info">
                 <span class="cart-item-title">${item.product.name}</span>
                 ${item.product.requiresRx ? '<span class="cart-item-req-rx">⚠️ Rx Required</span>' : ''}
-                <span class="cart-item-price">$${item.product.price.toFixed(2)}</span>
+                <span class="cart-item-price">${formatPrice(item.product.price)}</span>
             </div>
             <div class="cart-item-controls">
                 <div class="quantity-controls">
@@ -391,7 +435,7 @@ function renderCart() {
         dom.cartItemsContainer.appendChild(itemRow);
     });
     
-    dom.cartSubtotal.innerText = `$${subtotal.toFixed(2)}`;
+    dom.cartSubtotal.innerText = formatPrice(subtotal);
     dom.cartBadge.innerText = totalItems;
     
     if (containsRx) {
@@ -615,14 +659,17 @@ function simulateScanner(sampleKey) {
 function displayScannerResults(sampleKey) {
     const data = SCANNER_SAMPLES[sampleKey];
     activeScannerOutput = data;
+    activeScannerKey = sampleKey;
     
     dom.resultsPlaceholder.style.display = "none";
     dom.resultsContent.style.display = "block";
     
+    const formattedDate = getLocalizedDateTime(data.date, selectedTimezone);
+    
     // Setup metadata
     dom.resultsContent.querySelector('.patient-info').innerHTML = `
         <div><strong>Patient Name:</strong> ${data.patient}</div>
-        <div><strong>Rx Date:</strong> ${data.date}</div>
+        <div><strong>Rx Date:</strong> ${formattedDate}</div>
     `;
     
     // Setup list
@@ -720,10 +767,88 @@ dom.btnCheckout.addEventListener('click', () => {
     const rand = Math.floor(100000 + Math.random() * 900000);
     dom.refNumber.innerText = `#AG-${rand}`;
     
+    // Set localized delivery time
+    dom.deliveryTime.innerText = getCheckoutDeliveryEstimate();
+    
     // Display Modal
     dom.modalCheckoutSuccess.classList.add('open');
     closeCartDrawer();
 });
+
+// ==========================================================================
+// Settings Interaction Event Listeners & Helpers
+// ==========================================================================
+dom.selectRegion.addEventListener('change', (e) => {
+    selectedRegion = e.target.value;
+    updateAIPharmacistGreeting(true);
+});
+
+dom.selectCurrency.addEventListener('change', (e) => {
+    selectedCurrency = e.target.value;
+    renderCatalog();
+    renderCart();
+});
+
+dom.selectTimezone.addEventListener('change', (e) => {
+    selectedTimezone = e.target.value;
+    // If activeScannerOutput exists, refresh display with adjusted timezone date
+    if (activeScannerOutput) {
+        displayScannerResults(activeScannerKey);
+    }
+});
+
+function getLocalizedDateTime(utcDateString, timezoneKey) {
+    const tz = TIMEZONES[timezoneKey];
+    // Create base UTC date (assume prescription date is mid-day UTC for simplicity)
+    const baseDate = new Date(utcDateString + "T12:00:00Z");
+    
+    // Apply offset
+    const offsetMs = tz.offset * 60 * 60 * 1000;
+    const localizedDate = new Date(baseDate.getTime() + offsetMs);
+    
+    const pad = (n) => String(n).padStart(2, '0');
+    const yyyy = localizedDate.getUTCFullYear();
+    const mm = pad(localizedDate.getUTCMonth() + 1);
+    const dd = pad(localizedDate.getUTCDate());
+    const hh = pad(localizedDate.getUTCHours());
+    const min = pad(localizedDate.getUTCMinutes());
+    
+    return `${yyyy}-${mm}-${dd} ${hh}:${min} (${tz.label})`;
+}
+
+function getCheckoutDeliveryEstimate() {
+    const tz = TIMEZONES[selectedTimezone];
+    const nowUtc = new Date();
+    
+    // Apply offset
+    const offsetMs = tz.offset * 60 * 60 * 1000;
+    // Delivery is in 2 hours
+    const deliveryUtcPlus2 = new Date(nowUtc.getTime() + offsetMs + (2 * 60 * 60 * 1000));
+    
+    const pad = (n) => String(n).padStart(2, '0');
+    const hh = pad(deliveryUtcPlus2.getUTCHours());
+    const min = pad(deliveryUtcPlus2.getUTCMinutes());
+    
+    return `Today by ${hh}:${min} ${tz.label} (Within 2 hrs)`;
+}
+
+function updateAIPharmacistGreeting(isManualChange = false) {
+    const regInfo = REGIONS[selectedRegion];
+    const greetingMessage = `${regInfo.greeting} I am **Dr. Aegis**, your AI Pharmacist. How can I help you today? You can ask me about medication dosages, side effects, drug-drug compatibility, or generic alternatives. \n\n*Note: ${regInfo.policy}*`;
+    
+    // Reset first chatbot bubble with new localized greeting
+    const chatContainer = dom.chatMessages;
+    if (chatContainer && chatContainer.firstElementChild) {
+        const firstMsgContent = chatContainer.firstElementChild.querySelector('.message-content');
+        if (firstMsgContent) {
+            firstMsgContent.innerHTML = greetingMessage.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        }
+    }
+    
+    if (isManualChange) {
+        addChatMessage(`System Alert: Region switched to **${regInfo.name}**. AI Pharmacist guidelines updated.`, false);
+    }
+}
 
 dom.btnCloseSuccess.addEventListener('click', () => {
     // Reset Cart
@@ -738,3 +863,4 @@ dom.btnCloseSuccess.addEventListener('click', () => {
 // ==========================================================================
 renderCatalog();
 renderCart();
+updateAIPharmacistGreeting(false);

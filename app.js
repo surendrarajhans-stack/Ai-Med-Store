@@ -146,11 +146,11 @@ const CURRENCIES = {
 };
 
 const REGIONS = {
-    US: { name: "United States", greeting: "Hello! Welcome to AegisMed US.", policy: "Standard FDA safety rules apply.", defaultCurrency: "USD", defaultTimezone: "EST" },
-    UK: { name: "United Kingdom", greeting: "Hello! Welcome to AegisMed UK.", policy: "NHS compliance rules apply.", defaultCurrency: "GBP", defaultTimezone: "GMT" },
-    IN: { name: "India", greeting: "Namaste! Welcome to AegisMed India.", policy: "CDSCO drug controls apply.", defaultCurrency: "INR", defaultTimezone: "IST" },
-    DE: { name: "Germany", greeting: "Guten Tag! Willkommen bei AegisMed Deutschland.", policy: "BfArM safety regulations apply.", defaultCurrency: "EUR", defaultTimezone: "CET" },
-    JP: { name: "Japan", greeting: "Konnichiwa! Welcome to AegisMed Japan.", policy: "PMDA pharmaceutical guidelines apply.", defaultCurrency: "JPY", defaultTimezone: "JST" }
+    US: { name: "United States", greeting: "Hello! Welcome to AegisMed US.", policy: "Standard FDA safety rules apply.", defaultCurrency: "USD", defaultTimezone: "EST", taxRate: 0.08, taxName: "Est. Sales Tax (8%)" },
+    UK: { name: "United Kingdom", greeting: "Hello! Welcome to AegisMed UK.", policy: "NHS compliance rules apply.", defaultCurrency: "GBP", defaultTimezone: "GMT", taxRate: 0.20, taxName: "VAT (20%)" },
+    IN: { name: "India", greeting: "Namaste! Welcome to AegisMed India.", policy: "CDSCO drug controls apply.", defaultCurrency: "INR", defaultTimezone: "IST", taxRate: 0.12, taxName: "GST (12%)" },
+    DE: { name: "Germany", greeting: "Guten Tag! Willkommen bei AegisMed Deutschland.", policy: "BfArM safety regulations apply.", defaultCurrency: "EUR", defaultTimezone: "CET", taxRate: 0.19, taxName: "VAT (19%)" },
+    JP: { name: "Japan", greeting: "Konnichiwa! Welcome to AegisMed Japan.", policy: "PMDA pharmaceutical guidelines apply.", defaultCurrency: "JPY", defaultTimezone: "JST", taxRate: 0.10, taxName: "Consumption Tax (10%)" }
 };
 
 const TIMEZONES = {
@@ -175,6 +175,103 @@ let activeScannerKey = null; // Caches which sample was scanned
 
 let selectedSubdomain = "medstore";
 const customDomainSuffix = ".technocons.com";
+
+let hasRxUploaded = false;
+let hasTelehealthApproval = false;
+let selectedLang = "EN";
+
+// Translation dictionaries
+const TRANSLATIONS = {
+    EN: {
+        storeTab: "AegisMed Store",
+        chatTab: "AI Pharmacist",
+        scanTab: "Rx Scanner",
+        settingsTab: "Settings",
+        emptyCart: "Your cart is empty",
+        checkoutBtn: "Proceed to Secure Checkout",
+        telehealthBtn: "🩺 Consult Doctor for prescription",
+        subtotalLabel: "Subtotal:",
+        catalogTitle: "AegisMed Global Store",
+        catalogDesc: "AI-powered pharmaceutical ordering, automated drug interaction monitoring, and regional compliance checking.",
+        settingTitle: "Localization & System Settings",
+        settingDesc: "Customize your region, currency preferences, and time zone offsets. These changes will update inventory pricing, chatbot responses, and checkout parameters globally."
+    },
+    HI: {
+        storeTab: "एजिसमेड स्टोर",
+        chatTab: "एआई फार्मासिस्ट",
+        scanTab: "प्रिस्क्रिप्शन स्कैनर",
+        settingsTab: "सेटिंग्स",
+        emptyCart: "आपकी कार्ट खाली है",
+        checkoutBtn: "सुरक्षित चेकआउट करें",
+        telehealthBtn: "🩺 एआई डॉक्टर से परामर्श लें",
+        subtotalLabel: "कुल मूल्य:",
+        catalogTitle: "एजिसमेड ग्लोबल स्टोर",
+        catalogDesc: "एआई-संचालित दवा आदेश, स्वचालित दवा अंतःक्रिया निगरानी, और क्षेत्रीय अनुपालन जांच।",
+        settingTitle: "स्थानीयकरण एवं सिस्टम सेटिंग्स",
+        settingDesc: "अपने क्षेत्र, मुद्रा प्राथमिकताओं और समय क्षेत्र ऑफसेट को अनुकूलित करें। ये बदलाव विश्व स्तर पर उत्पाद की कीमतों और एआई फार्मासिस्ट को अपडेट करेंगे।"
+    },
+    DE: {
+        storeTab: "AegisMed Shop",
+        chatTab: "KI-Apotheker",
+        scanTab: "Rezept-Scanner",
+        settingsTab: "Einstellungen",
+        emptyCart: "Ihr Warenkorb ist leer",
+        checkoutBtn: "Sicher zur Kasse gehen",
+        telehealthBtn: "🩺 Arzt für Rezept konsultieren",
+        subtotalLabel: "Zwischensumme:",
+        catalogTitle: "AegisMed Globaler Shop",
+        catalogDesc: "KI-gestützte pharmazeutische Bestellung, automatisierte Überwachung von Wechselwirkungen und regionale Compliance-Prüfung.",
+        settingTitle: "Lokalisierung & Systemeinstellungen",
+        settingDesc: "Passen Sie Region, Währung und Zeitzonen-Offsets an. Diese Änderungen aktualisieren die Preise, Chatbot-Antworten und Checkout-Parameter weltweit."
+    },
+    JP: {
+        storeTab: "イージスメッド店舗",
+        chatTab: "AI薬剤師相談",
+        scanTab: "処方箋スキャン",
+        settingsTab: "環境設定",
+        emptyCart: "カートは空です",
+        checkoutBtn: "安全なレジに進む",
+        telehealthBtn: "🩺 医師による遠隔処方箋発行",
+        subtotalLabel: "小計:",
+        catalogTitle: "イージスメッド・グローバル",
+        catalogDesc: "AI対応の医薬品注文、自動薬物相互作用監視、および地域ごとのコンプライアンスチェック。",
+        settingTitle: "地域と言語の設定",
+        settingDesc: "地域、通貨、タイムゾーンのオフセットをカスタマイズします。これらの変更により、価格設定、チャットボットの応答、チェックアウトパラメータが更新されます。"
+    }
+};
+
+const CONTRAINDICATION_RULES = [
+    {
+        condition: "pregnancy",
+        drugId: "m3", // Warfarin Flow
+        severity: "CRITICAL",
+        message: "❌ Contraindication: **Warfarin Flow** is strictly contraindicated during pregnancy due to high risk of fetal birth defects and internal bleeding. Please consult a doctor immediately."
+    },
+    {
+        condition: "hypertension",
+        drugId: "m2", // Ibuprofen Forte
+        severity: "WARNING",
+        message: "⚠️ Precaution: **Ibuprofen Forte** (NSAID) can increase blood pressure and counteract anti-hypertensive therapies. Monitor blood pressure closely."
+    },
+    {
+        condition: "nsaid-allergy",
+        drugId: "m1", // Aspirin Cardioprotect
+        severity: "CRITICAL",
+        message: "❌ Critical Allergy Warning: Patient has documented NSAID allergy. **Aspirin Cardioprotect** can cause severe anaphylactic responses."
+    },
+    {
+        condition: "nsaid-allergy",
+        drugId: "m2", // Ibuprofen Forte
+        severity: "CRITICAL",
+        message: "❌ Critical Allergy Warning: Patient has documented NSAID allergy. **Ibuprofen Forte** can cause severe asthma triggers or skin rashes."
+    },
+    {
+        condition: "kidney",
+        drugId: "m2", // Ibuprofen Forte
+        severity: "WARNING",
+        message: "⚠️ Precaution: NSAIDs like **Ibuprofen Forte** reduce renal blood flow. Avoid use in moderate-to-severe renal impairment."
+    }
+];
 
 // Helper function: formats a price based on selected currency
 function formatPrice(usdValue) {
@@ -235,12 +332,31 @@ const dom = {
     selectRegion: document.getElementById('select-region'),
     selectCurrency: document.getElementById('select-currency'),
     selectTimezone: document.getElementById('select-timezone'),
+    selectLang: document.getElementById('select-lang'),
 
     // Subdomain elements
     inputSubdomain: document.getElementById('input-subdomain'),
     subdomainPreviewLink: document.getElementById('subdomain-preview-link'),
     headerSubdomain: document.getElementById('header-subdomain'),
-    receiptUrl: document.getElementById('receipt-url')
+    receiptUrl: document.getElementById('receipt-url'),
+    summaryTaxLabel: document.getElementById('summary-tax-label'),
+    summaryTax: document.getElementById('summary-tax'),
+    summaryTotal: document.getElementById('summary-total'),
+
+    // Telehealth elements
+    btnTelehealthTrigger: document.getElementById('btn-telehealth-trigger'),
+    modalTelehealth: document.getElementById('modal-telehealth'),
+    btnCloseTelehealth: document.getElementById('btn-close-telehealth'),
+    telehealthChatPane: document.getElementById('telehealth-chat-pane'),
+    telehealthInputRow: document.getElementById('telehealth-input-row'),
+
+    // Patient profile checkboxes
+    profileHypertension: document.getElementById('profile-hypertension'),
+    profileDiabetes: document.getElementById('profile-diabetes'),
+    profileAsthma: document.getElementById('profile-asthma'),
+    profilePregnancy: document.getElementById('profile-pregnancy'),
+    profileKidney: document.getElementById('profile-kidney'),
+    profileNsaidAllergy: document.getElementById('profile-nsaid-allergy')
 };
 
 // Simulated data for prescription scanner results
@@ -407,12 +523,13 @@ function renderCart() {
         dom.cartItemsContainer.innerHTML = `
             <div class="cart-empty-state">
                 <svg viewBox="0 0 24 24" class="empty-cart-icon"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm7 17H5V8h14v12z"/></svg>
-                <p>Your cart is empty</p>
+                <p>${TRANSLATIONS[selectedLang].emptyCart}</p>
             </div>
         `;
         dom.cartSubtotal.innerText = formatPrice(0);
         dom.cartBadge.innerText = "0";
         dom.rxWarning.style.display = "none";
+        dom.btnTelehealthTrigger.style.display = "none";
         dom.btnCheckout.disabled = true;
         return;
     }
@@ -447,15 +564,34 @@ function renderCart() {
     dom.cartSubtotal.innerText = formatPrice(subtotal);
     dom.cartBadge.innerText = totalItems;
     
+    // Check if we have a critical warning from contraindications or drug interactions
+    const hasCriticalWarning = document.querySelector('.interaction-alert[data-severity="CRITICAL"]');
+    
     if (containsRx) {
         dom.rxWarning.style.display = "flex";
+        
+        if (hasRxUploaded || hasTelehealthApproval) {
+            dom.rxWarning.querySelector('.warning-pill').innerText = "Rx Approved";
+            dom.rxWarning.querySelector('.warning-pill').style.background = "var(--primary)";
+            dom.rxWarning.querySelector('.warning-pill').style.boxShadow = "0 0 8px var(--primary-glow)";
+            dom.rxWarning.querySelector('.warning-text').innerText = hasTelehealthApproval ? "Approved by Dr. Aegis MD" : "Prescription verified successfully";
+            
+            dom.btnTelehealthTrigger.style.display = "none";
+            dom.btnCheckout.disabled = !!hasCriticalWarning;
+        } else {
+            dom.rxWarning.querySelector('.warning-pill').innerText = "Rx Required";
+            dom.rxWarning.querySelector('.warning-pill').style.background = "#e11d48";
+            dom.rxWarning.querySelector('.warning-pill').style.boxShadow = "none";
+            dom.rxWarning.querySelector('.warning-text').innerText = "Requires verified doctor prescription";
+            
+            dom.btnTelehealthTrigger.style.display = "block";
+            dom.btnCheckout.disabled = true; // Block because no Rx verified!
+        }
     } else {
         dom.rxWarning.style.display = "none";
+        dom.btnTelehealthTrigger.style.display = "none";
+        dom.btnCheckout.disabled = !!hasCriticalWarning;
     }
-    
-    // Enable checkout only if we don't have a critical interaction blocked
-    const hasCriticalWarning = document.querySelector('.interaction-alert[data-severity="CRITICAL"]');
-    dom.btnCheckout.disabled = !!hasCriticalWarning;
 }
 
 window.changeQty = function(id, delta) {
@@ -482,42 +618,77 @@ window.removeCartItem = function(id) {
 function checkInteractions() {
     dom.alertsContainer.innerHTML = "";
     
-    if (cart.length < 2) {
-        // Double check if checkout is enabled
-        const hasCritical = false;
-        dom.btnCheckout.disabled = false;
-        return;
-    }
-    
-    const activeIngredients = cart.map(item => item.product.ingredient);
     let hasCritical = false;
     
-    INCOMPATIBILITY_RULES.forEach(rule => {
-        if (activeIngredients.includes(rule.ing1) && activeIngredients.includes(rule.ing2)) {
-            const alertBox = document.createElement('div');
-            alertBox.className = 'interaction-alert';
-            alertBox.setAttribute('data-severity', rule.severity);
-            
-            if (rule.severity === "CRITICAL") {
-                hasCritical = true;
-            }
-            
-            alertBox.innerHTML = `
-                <div class="alert-message">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                    <div>
-                        <strong>[${rule.severity}] drug interaction warning:</strong>
-                        <p style="font-size: 0.85rem; margin-top: 0.25rem;">${rule.reason}</p>
+    // Check patient contraindications first (can be triggered even with single item in cart)
+    let activeConditions = [];
+    if (dom.profileHypertension && dom.profileHypertension.checked) activeConditions.push("hypertension");
+    if (dom.profileDiabetes && dom.profileDiabetes.checked) activeConditions.push("diabetes");
+    if (dom.profileAsthma && dom.profileAsthma.checked) activeConditions.push("asthma");
+    if (dom.profilePregnancy && dom.profilePregnancy.checked) activeConditions.push("pregnancy");
+    if (dom.profileKidney && dom.profileKidney.checked) activeConditions.push("kidney");
+    if (dom.profileNsaidAllergy && dom.profileNsaidAllergy.checked) activeConditions.push("nsaid-allergy");
+
+    cart.forEach(item => {
+        CONTRAINDICATION_RULES.forEach(rule => {
+            if (activeConditions.includes(rule.condition) && item.product.id === rule.drugId) {
+                const alertBox = document.createElement('div');
+                alertBox.className = 'interaction-alert';
+                alertBox.setAttribute('data-severity', rule.severity);
+                
+                if (rule.severity === "CRITICAL") {
+                    hasCritical = true;
+                }
+                
+                alertBox.innerHTML = `
+                    <div class="alert-message">
+                        <svg viewBox="0 0 24 24" style="fill: ${rule.severity === 'CRITICAL' ? '#e11d48' : '#eab308'}; width: 24px; height: 24px; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        <div>
+                            <strong>[${rule.severity}] Patient Safety Contraindication:</strong>
+                            <p style="font-size: 0.85rem; margin-top: 0.25rem;">${rule.message}</p>
+                        </div>
                     </div>
-                </div>
-                <button class="btn-dismiss-alert" onclick="this.parentElement.remove()">✕</button>
-            `;
-            dom.alertsContainer.appendChild(alertBox);
-        }
+                    <button class="btn-dismiss-alert" onclick="this.parentElement.remove()">✕</button>
+                `;
+                dom.alertsContainer.appendChild(alertBox);
+            }
+        });
     });
+
+    // Check drug-drug interaction warnings (requires at least 2 items)
+    if (cart.length >= 2) {
+        const activeIngredients = cart.map(item => item.product.ingredient);
+        INCOMPATIBILITY_RULES.forEach(rule => {
+            if (activeIngredients.includes(rule.ing1) && activeIngredients.includes(rule.ing2)) {
+                const alertBox = document.createElement('div');
+                alertBox.className = 'interaction-alert';
+                alertBox.setAttribute('data-severity', rule.severity);
+                
+                if (rule.severity === "CRITICAL") {
+                    hasCritical = true;
+                }
+                
+                alertBox.innerHTML = `
+                    <div class="alert-message">
+                        <svg viewBox="0 0 24 24" style="fill: ${rule.severity === 'CRITICAL' ? '#e11d48' : '#eab308'}; width: 24px; height: 24px; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        <div>
+                            <strong>[${rule.severity}] Drug-Drug Interaction Warning:</strong>
+                            <p style="font-size: 0.85rem; margin-top: 0.25rem;">${rule.reason}</p>
+                        </div>
+                    </div>
+                    <button class="btn-dismiss-alert" onclick="this.parentElement.remove()">✕</button>
+                `;
+                dom.alertsContainer.appendChild(alertBox);
+            }
+        });
+    }
     
     // Disable/Enable checkout button based on critical safety alerts
-    dom.btnCheckout.disabled = hasCritical;
+    // But double check if contains prescription drugs and lacks verification!
+    let containsRx = cart.some(item => item.product.requiresRx);
+    const hasUnverifiedRx = containsRx && !hasRxUploaded && !hasTelehealthApproval;
+    
+    dom.btnCheckout.disabled = hasCritical || hasUnverifiedRx;
 }
 
 // ==========================================================================
@@ -788,6 +959,20 @@ dom.btnCheckout.addEventListener('click', () => {
     dom.receiptUrl.innerText = receiptLink;
     dom.receiptUrl.href = receiptLink;
     
+    // Calculate localized tax values
+    const reg = REGIONS[selectedRegion];
+    let subtotal = 0;
+    cart.forEach(item => {
+        subtotal += item.product.price * item.quantity;
+    });
+    
+    const taxAmount = subtotal * reg.taxRate;
+    const finalAmount = subtotal + taxAmount;
+    
+    dom.summaryTaxLabel.innerText = reg.taxName;
+    dom.summaryTax.innerText = formatPrice(taxAmount);
+    dom.summaryTotal.innerText = formatPrice(finalAmount);
+    
     // Display Modal
     dom.modalCheckoutSuccess.classList.add('open');
     closeCartDrawer();
@@ -888,8 +1073,10 @@ function updateAIPharmacistGreeting(isManualChange = false) {
 }
 
 dom.btnCloseSuccess.addEventListener('click', () => {
-    // Reset Cart
+    // Reset Cart and verification statuses
     cart = [];
+    hasRxUploaded = false;
+    hasTelehealthApproval = false;
     renderCart();
     checkInteractions();
     dom.modalCheckoutSuccess.classList.remove('open');
@@ -911,6 +1098,162 @@ dom.inputSubdomain.addEventListener('input', (e) => {
     dom.subdomainPreviewLink.innerText = fullUrl;
     dom.subdomainPreviewLink.href = fullUrl;
 });
+
+// ==========================================================================
+// Telehealth & Language Event Listeners
+// ==========================================================================
+dom.btnTelehealthTrigger.addEventListener('click', () => {
+    dom.modalTelehealth.classList.add('open');
+    startTelehealthConsultation();
+});
+
+dom.btnCloseTelehealth.addEventListener('click', () => {
+    dom.modalTelehealth.classList.remove('open');
+});
+
+dom.selectLang.addEventListener('change', (e) => {
+    updateAppLanguage(e.target.value);
+});
+
+// Patient profile checkboxes change listeners
+const checkboxes = [
+    dom.profileHypertension,
+    dom.profileDiabetes,
+    dom.profileAsthma,
+    dom.profilePregnancy,
+    dom.profileKidney,
+    dom.profileNsaidAllergy
+];
+checkboxes.forEach(cb => {
+    if (cb) {
+        cb.addEventListener('change', () => {
+            checkInteractions();
+        });
+    }
+});
+
+// Add CNAME prescription loading verification flag
+dom.btnAddScanned.addEventListener('click', () => {
+    hasRxUploaded = true;
+});
+
+// Translation runtime application
+function updateAppLanguage(langKey) {
+    selectedLang = langKey;
+    const t = TRANSLATIONS[selectedLang];
+    
+    // Navigation Tabs
+    const tabs = dom.tabs;
+    if (tabs.length >= 4) {
+        tabs[0].querySelector('span').innerText = t.storeTab;
+        tabs[1].querySelector('span').innerText = t.chatTab;
+        tabs[2].querySelector('span').innerText = t.scanTab;
+        tabs[3].querySelector('span').innerText = t.settingsTab;
+    }
+    
+    // Catalog description
+    const catTitle = document.querySelector('.catalog-title');
+    if (catTitle) catTitle.innerText = t.catalogTitle;
+    const catDesc = document.querySelector('.catalog-desc');
+    if (catDesc) catDesc.innerText = t.catalogDesc;
+    
+    // Settings description
+    const setTitle = document.querySelector('.settings-title');
+    if (setTitle) setTitle.innerText = t.settingTitle;
+    const setDesc = document.querySelector('.settings-desc');
+    if (setDesc) setDesc.innerText = t.settingDesc;
+    
+    // Checkout trigger button
+    if (dom.btnCheckout) {
+        dom.btnCheckout.innerText = t.checkoutBtn;
+    }
+    if (dom.btnTelehealthTrigger) {
+        dom.btnTelehealthTrigger.innerText = t.telehealthBtn;
+    }
+    
+    // Subtotal label
+    const subtotalText = document.querySelector('.cart-summary-line span:first-child');
+    if (subtotalText) {
+        subtotalText.innerText = t.subtotalLabel;
+    }
+    
+    // Update pharmacist greeting
+    updateAIPharmacistGreeting(false);
+}
+
+// Telehealth Consultation Dialogue Engine
+function startTelehealthConsultation() {
+    const chatPane = dom.telehealthChatPane;
+    chatPane.innerHTML = "";
+    
+    addTelehealthMessage("Doctor", "Hello, I am Dr. Aegis MD. I see you are requesting prescription medications. Before I can approve the prescription, please tell me: what primary symptoms are you seeking to manage?");
+    
+    const options = [
+        { text: "Bacterial Infection / Fever", nextStep: 1 },
+        { text: "Cardiovascular Health / High Cholesterol", nextStep: 2 },
+        { text: "Mild pain or other symptoms", nextStep: 3 }
+    ];
+    
+    renderTelehealthOptions(options);
+}
+
+function addTelehealthMessage(sender, text) {
+    const msg = document.createElement('div');
+    msg.className = `telehealth-msg ${sender === 'Doctor' ? 'telehealth-msg-doctor' : 'telehealth-msg-patient'}`;
+    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    dom.telehealthChatPane.appendChild(msg);
+    dom.telehealthChatPane.scrollTop = dom.telehealthChatPane.scrollHeight;
+}
+
+function renderTelehealthOptions(options) {
+    const row = dom.telehealthInputRow;
+    row.innerHTML = "";
+    
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "telehealth-option-btn";
+        btn.innerText = opt.text;
+        btn.onclick = () => {
+            if (opt.action) {
+                opt.action();
+            } else {
+                handleTelehealthChoice(opt);
+            }
+        };
+        row.appendChild(btn);
+    });
+}
+
+function handleTelehealthChoice(opt) {
+    addTelehealthMessage("Patient", opt.text);
+    dom.telehealthInputRow.innerHTML = "";
+    
+    setTimeout(() => {
+        if (opt.nextStep === 1) {
+            addTelehealthMessage("Doctor", "Understood. For active bacterial infections, I am approving your antibiotic prescription (Amoxicillin). Please take the full course as directed.");
+        } else if (opt.nextStep === 2) {
+            addTelehealthMessage("Doctor", "I see. For managing lipid control and cardiovascular safety, I am approving your Atorvastatin card. Make sure to check muscle parameters yearly.");
+        } else {
+            addTelehealthMessage("Doctor", "I've reviewed your request. Based on your symptom profile, I have approved the required prescription clearance for your selected medicines.");
+        }
+        
+        setTimeout(() => {
+            addTelehealthMessage("Doctor", "Digital prescription certificate signed and attached. You can now proceed to checkout.");
+            
+            renderTelehealthOptions([
+                {
+                    text: "Apply Prescription & Return",
+                    action: () => {
+                        hasTelehealthApproval = true;
+                        dom.modalTelehealth.classList.remove('open');
+                        renderCart();
+                        checkInteractions();
+                    }
+                }
+            ]);
+        }, 1000);
+    }, 1000);
+}
 
 // ==========================================================================
 // App Initialization

@@ -336,6 +336,68 @@
                                     </select>
                                 </div>
                             </div>
+
+                            <div class="settings-row">
+                                <div class="settings-info">
+                                    <label for="select-lang">
+                                        <span class="settings-icon">🗣️</span>
+                                        Interface Language
+                                    </label>
+                                    <span class="settings-subtext">Translates buttons, medication details, warnings, and AI pharmacist responses.</span>
+                                </div>
+                                <div class="settings-control">
+                                    <select id="select-lang" class="settings-select">
+                                        <option value="EN">English (EN)</option>
+                                        <option value="HI">हिन्दी (HI) - Hindi</option>
+                                        <option value="DE">Deutsch (DE) - German</option>
+                                        <option value="JP">日本語 (JP) - Japanese</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-row">
+                                <div class="settings-info">
+                                    <label>
+                                        <span class="settings-icon">🩺</span>
+                                        Patient Health Profile
+                                    </label>
+                                    <span class="settings-subtext">Select chronic conditions or active allergies to trigger automatic AI drug contraindication check.</span>
+                                </div>
+                                <div class="settings-control">
+                                    <div class="health-checklist">
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-hypertension">
+                                            <span class="checkbox-custom"></span>
+                                            Hypertension (High BP)
+                                        </label>
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-diabetes">
+                                            <span class="checkbox-custom"></span>
+                                            Type 2 Diabetes
+                                        </label>
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-asthma">
+                                            <span class="checkbox-custom"></span>
+                                            Asthma
+                                        </label>
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-pregnancy">
+                                            <span class="checkbox-custom"></span>
+                                            Pregnancy
+                                        </label>
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-kidney">
+                                            <span class="checkbox-custom"></span>
+                                            Kidney Disease
+                                        </label>
+                                        <label class="health-checkbox-label">
+                                            <input type="checkbox" id="profile-nsaid-allergy">
+                                            <span class="checkbox-custom"></span>
+                                            NSAID Allergy (Aspirin/Ibuprofen)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -370,6 +432,9 @@
                 <!-- Checkout Form / Actions -->
                 <div class="checkout-actions">
                     <button class="btn-primary w-full" id="btn-checkout" disabled>Proceed to Secure Checkout</button>
+                    <button class="btn-secondary w-full" id="btn-telehealth-trigger" style="margin-top: 0.75rem; display: none; background: rgba(13, 148, 136, 0.1); border: 1px solid var(--secondary); color: var(--secondary);">
+                        🩺 Consult Doctor for prescription
+                    </button>
                 </div>
             </div>
         </div>
@@ -400,9 +465,47 @@
                         <span>Digital Receipt:</span>
                         <a id="receipt-url" href="#" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.85rem; word-break: break-all;">Link</a>
                     </div>
+                    <div class="summary-row">
+                        <span id="summary-tax-label">Local Tax:</span>
+                        <strong id="summary-tax">$0.00</strong>
+                    </div>
+                    <div class="summary-row" style="border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
+                        <span>Total Charged:</span>
+                        <strong id="summary-total">$0.00</strong>
+                    </div>
                 </div>
                 
                 <button class="btn-primary" id="btn-close-success">Continue Shopping</button>
+            </div>
+        </div>
+
+        <!-- Modal: Telehealth Consultation -->
+        <div class="modal" id="modal-telehealth">
+            <div class="modal-content glass-panel animate-scale" style="max-width: 500px; text-align: left; padding: 2rem;">
+                <div class="telehealth-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="pulse-dot" style="background-color: var(--primary); width: 8px; height: 8px; border-radius: 50%; display: inline-block;"></div>
+                        <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-primary);">Dr. Aegis MD - Telehealth</h3>
+                    </div>
+                    <button class="btn-close-cart" id="btn-close-telehealth" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">✕</button>
+                </div>
+                
+                <div class="telehealth-video-sim" style="width: 100%; height: 180px; background: #070c10; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                    <div class="video-doctor-placeholder" style="text-align: center; color: var(--text-secondary);">
+                        <svg viewBox="0 0 24 24" style="width: 3rem; height: 3rem; fill: var(--primary); margin-bottom: 0.5rem; display: inline-block;"><path d="M12 2C6.48 2 2 6.53 2 12.06c0 1.93.46 3.72 1.28 5.29L2 22l4.81-1.25c1.55.8 3.32 1.25 5.19 1.25 5.52 0 10-4.53 10-10.06C22 6.53 17.52 2 12 2zm-1 4h2v2h-2V6zm0 4h2v6h-2v-6z"/></svg>
+                        <p style="font-size: 0.85rem; font-weight: 500; margin: 0;">Connection Secure • Active Call</p>
+                    </div>
+                    <!-- Patient video preview -->
+                    <div style="position: absolute; top: 10px; right: 10px; width: 65px; height: 50px; background: rgba(255,255,255,0.05); border: 1px solid var(--primary); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-secondary); text-shadow: 0 0 4px #000;">Patient</div>
+                </div>
+
+                <div class="telehealth-chat-pane" id="telehealth-chat-pane" style="height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; scrollbar-width: thin;">
+                    <!-- Telehealth dialogue goes here -->
+                </div>
+
+                <div class="telehealth-input-row" id="telehealth-input-row" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <!-- User options will load here as buttons -->
+                </div>
             </div>
         </div>
     </div>
